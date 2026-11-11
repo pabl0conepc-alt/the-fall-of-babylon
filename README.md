@@ -28,3 +28,5 @@ The browser UI binds only to `127.0.0.1`, requires same-origin requests and a pe
 Directory analysis has fixed conservative ceilings: depth 3 below the selected root, 50 regular files, 100 recorded entries, 1 MiB per file, and 16 MiB total read. Symlinks and special files are recorded as rejected without following or opening them; over-limit, unreadable, and skipped entries receive explicit statuses. The directory report marks truncated traversal. Any selected database must be outside the analyzed directory.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the module boundaries, supported signatures, limitations, and deferred capabilities.
+
+Native installers for Debian/Ubuntu, Arch Linux, Windows 10/11, and macOS are documented in [packaging/README.md](packaging/README.md).

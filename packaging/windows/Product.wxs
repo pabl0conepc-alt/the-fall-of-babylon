@@ -1,0 +1,32 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="Babylon"
+    Manufacturer="Babylon project"
+    Version="$(var.Version)"
+    UpgradeCode="F4129C6D-C1D6-4D14-9893-D40587B95451"
+    Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Babylon is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <Feature Id="Main">
+      <ComponentGroupRef Id="AppComponents" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Babylon" />
+    </StandardDirectory>
+    <ComponentGroup Id="AppComponents" Directory="INSTALLFOLDER">
+      <Component Id="BabylonExecutable" Guid="*">
+        <File Id="BabylonExe" Source="$(var.BinaryPath)" KeyPath="yes" />
+        <Environment
+          Id="BabylonPath"
+          Name="PATH"
+          Value="[INSTALLFOLDER]"
+          Part="last"
+          Action="set"
+          System="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
