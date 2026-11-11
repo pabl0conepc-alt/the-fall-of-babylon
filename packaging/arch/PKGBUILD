@@ -1,0 +1,32 @@
+pkgname=babylon
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Local-first authorized static file analysis'
+arch=('x86_64')
+url='https://github.com/pabl0conepc-alt/the-fall-of-babylon'
+license=('unknown')
+depends=('glibc')
+makedepends=('python' 'python-pip')
+source=()
+sha256sums=()
+
+build() {
+  local repository_root
+  local build_environment
+  repository_root="$(cd "$startdir/../.." && pwd)"
+  build_environment="$srcdir/build-venv"
+  python -m venv "$build_environment"
+  "$build_environment/bin/python" -m pip install \
+    -r "$repository_root/packaging/requirements-build.txt"
+  "$build_environment/bin/python" "$repository_root/packaging/build_binary.py" \
+    --dist-dir "$srcdir/dist" \
+    --work-dir "$srcdir/build"
+}
+
+package() {
+  local repository_root
+  repository_root="$(cd "$startdir/../.." && pwd)"
+  install -Dm755 "$srcdir/dist/babylon" "$pkgdir/usr/bin/babylon"
+  install -Dm644 "$repository_root/README.md" "$pkgdir/usr/share/doc/babylon/README.md"
+  install -Dm644 "$repository_root/packaging/README.md" "$pkgdir/usr/share/doc/babylon/INSTALL.md"
+}

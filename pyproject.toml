@@ -15,3 +15,6 @@ babylon = "fall_of_babylon.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+fall_of_babylon = ["web/*.html"]
