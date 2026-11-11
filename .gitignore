@@ -4,3 +4,14 @@ __pycache__/
 build/
 dist/
 .venv/
+.coverage
+.pytest_cache/
+.env
+.env.*
+!.env.example
+babylon.sqlite3
+babylon.sqlite3-journal
+babylon.sqlite3-shm
+babylon.sqlite3-wal
+.DS_Store
+Thumbs.db
