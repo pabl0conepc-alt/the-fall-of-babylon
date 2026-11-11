@@ -9,9 +9,10 @@ version="$(python3 -c 'import tomllib; print(tomllib.loads(open("pyproject.toml"
 stage="$(mktemp -d "${TMPDIR:-/tmp}/babylon-pkg.XXXXXX")"
 trap 'rm -rf -- "$stage"' EXIT
 
-install -Dm755 dist/babylon "$stage/usr/local/bin/babylon"
-install -Dm644 README.md "$stage/usr/local/share/doc/babylon/README.md"
-install -Dm644 packaging/README.md "$stage/usr/local/share/doc/babylon/INSTALL.md"
+mkdir -p "$stage/usr/local/bin" "$stage/usr/local/share/doc/babylon"
+install -m755 dist/babylon "$stage/usr/local/bin/babylon"
+install -m644 README.md "$stage/usr/local/share/doc/babylon/README.md"
+install -m644 packaging/README.md "$stage/usr/local/share/doc/babylon/INSTALL.md"
 mkdir -p dist
 pkgbuild \
   --root "$stage" \
