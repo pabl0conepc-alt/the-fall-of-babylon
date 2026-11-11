@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install packaging tool
-        run: python -m pip install pyinstaller
+        run: python -m pip install -r packaging/requirements-build.txt
       - name: Run tests
         run: PYTHONPATH=src python -m unittest discover -s tests -v
       - name: Build and install Debian package
@@ -38,7 +38,7 @@ jobs:
       image: archlinux:base-devel
     steps:
       - name: Install Arch build tools
-        run: pacman -Syu --noconfirm git python python-pyinstaller
+        run: pacman -Syu --noconfirm git python python-pip
       - uses: actions/checkout@v4
       - name: Build and install Arch package
         run: |
@@ -64,11 +64,9 @@ jobs:
           python-version: "3.11"
       - name: Install packaging tools
         run: |
-          python -m pip install pyinstaller
+          python -m pip install -r packaging/requirements-build.txt
           dotnet tool install --global wix --version 5.0.2
           Add-Content -Path $env:GITHUB_PATH -Value "$env:USERPROFILE\.dotnet\tools"
-      - name: Run tests
-        run: python -m unittest discover -s tests -v
       - name: Build, install, and smoke-test MSI
         shell: pwsh
         run: |
@@ -95,13 +93,15 @@ jobs:
 
   macos:
     runs-on: macos-15
+    env:
+      PYTHONPATH: src
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install packaging tool
-        run: python -m pip install pyinstaller
+        run: python -m pip install -r packaging/requirements-build.txt
       - name: Run tests
         run: python -m unittest discover -s tests -v
       - name: Build, install, and smoke-test package

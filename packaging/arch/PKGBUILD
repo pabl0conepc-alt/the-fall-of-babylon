@@ -6,14 +6,19 @@ arch=('x86_64')
 url='https://github.com/pabl0conepc-alt/the-fall-of-babylon'
 license=('unknown')
 depends=('glibc')
-makedepends=('python' 'python-pyinstaller')
+makedepends=('python' 'python-pip')
 source=()
 sha256sums=()
 
 build() {
   local repository_root
+  local build_environment
   repository_root="$(cd "$startdir/../.." && pwd)"
-  python "$repository_root/packaging/build_binary.py" \
+  build_environment="$srcdir/build-venv"
+  python -m venv "$build_environment"
+  "$build_environment/bin/python" -m pip install \
+    -r "$repository_root/packaging/requirements-build.txt"
+  "$build_environment/bin/python" "$repository_root/packaging/build_binary.py" \
     --dist-dir "$srcdir/dist" \
     --work-dir "$srcdir/build"
 }

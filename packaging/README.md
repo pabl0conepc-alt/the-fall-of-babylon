@@ -18,8 +18,8 @@ Depois de instalar, use `babylon --help` e `babylon ui`; a UI informa a URL loop
 ## Construção local
 
 - Linux Debian/Ubuntu: instale Python 3.11+, PyInstaller e `dpkg-deb`; execute `python3 -m pip install pyinstaller` e `bash packaging/linux/build_deb.sh`.
-- Arch Linux: com `base-devel`, Python e `python-pyinstaller` instalados, execute `cd packaging/arch && makepkg`.
-- macOS: instale Python 3.11+, PyInstaller e as ferramentas de linha de comando do Xcode; execute `python3 -m pip install pyinstaller` e `bash packaging/macos/build_pkg.sh`.
-- Windows: instale Python 3.11+, PyInstaller e WiX Toolset 5; execute os passos `setup-python`, `pip install pyinstaller`, `python packaging/build_binary.py` e `wix build` do workflow `.github/workflows/installers.yml`.
+- Arch Linux: com `base-devel`, Python e `python-pip` instalados, execute `cd packaging/arch && makepkg`; a receita cria um ambiente isolado e instala a versão de build fixada.
+- macOS: instale Python 3.11+ e as ferramentas de linha de comando do Xcode; execute `python3 -m pip install -r packaging/requirements-build.txt` e `bash packaging/macos/build_pkg.sh`.
+- Windows: instale Python 3.11+ e WiX Toolset 5; execute os passos `setup-python`, `pip install -r packaging/requirements-build.txt`, `python packaging/build_binary.py` e `wix build` do workflow `.github/workflows/installers.yml`.
 
 O PyInstaller e as ferramentas nativas são ferramentas de build; o aplicativo continua usando somente a biblioteca padrão do Python.
