@@ -27,8 +27,8 @@ _SIGNATURES = (
 )
 _LIMITATIONS = (
     "Identification is limited to a small built-in set of signatures; an extension is only a hint.",
-    "No structural file-format parsing is performed; archives are not listed, extracted, or decompressed.",
-    "Executable internals are not analyzed.",
+    "This lightweight identification result does not include structural parsing; the full analysis pipeline parses bounded PE, ELF, and Mach-O metadata.",
+    "Archives are not listed, extracted, or decompressed; executable code is not disassembled or executed.",
     "The source and report are not written by this tool; JSON is emitted to stdout and may be redirected by the caller.",
 )
 
@@ -133,6 +133,10 @@ def read_local_file_at(
 ) -> LocalFileContent:
     """Read one entry relative to an already-open directory without path re-resolution."""
     _validate_max_bytes(max_bytes)
+    if os.name == "nt":
+        raise LocalAnalysisError(
+            "Secure descriptor-relative directory reads are unavailable on Windows."
+        )
     if not isinstance(directory_fd, int) or isinstance(directory_fd, bool):
         raise TypeError("directory_fd must be an integer file descriptor")
     if not isinstance(filename, str):
@@ -172,6 +176,10 @@ def read_local_file_at(
 
 
 def _read_file_safely(path: Path, max_bytes: int) -> tuple[bytes, str]:
+    if os.name == "nt":
+        from .windows_file_access import read_windows_file
+
+        return read_windows_file(path, max_bytes)
     if (
         not hasattr(os, "O_NOFOLLOW")
         or not hasattr(os, "O_DIRECTORY")

@@ -4,11 +4,12 @@ Contributions to The Fall of Babylon are welcome. Before starting substantial wo
 
 ## Development setup
 
-- Use Python 3.11 or newer.
-- Runtime code uses only the Python standard library.
-- Run the test suite from the repository root:
+- Use Python 3.11+, CMake 3.20+, and a C++17 compiler.
+- The Python runtime uses only the standard library; the bounded native parser helper is built per platform and bundled in the installer.
+- Build and test the helper, then run the test suite from the repository root:
 
   ```sh
+  python packaging/build_native.py
   PYTHONPATH=src python -m unittest discover -s tests -v
   ```
 

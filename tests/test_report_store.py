@@ -80,7 +80,10 @@ class ReportStoreTests(unittest.TestCase):
 
     def test_refuses_symlinked_database_path(self) -> None:
         linked_database = self.root / "linked.sqlite3"
-        linked_database.symlink_to(self.source)
+        try:
+            linked_database.symlink_to(self.source)
+        except (OSError, NotImplementedError):
+            self.skipTest("symbolic-link creation is unavailable")
         original = self.source.read_bytes()
 
         with self.assertRaises(ReportStoreError):
