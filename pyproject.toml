@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "the-fall-of-babylon"
+version = "0.1.0"
+description = "A modular foundation for authorized local analysis and reconstruction."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+babylon = "fall_of_babylon.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
