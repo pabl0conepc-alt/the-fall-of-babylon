@@ -18,6 +18,8 @@ jobs:
           python-version: "3.11"
       - name: Install packaging tool
         run: python -m pip install -r packaging/requirements-build.txt
+      - name: Build and test native parser
+        run: python packaging/build_native.py
       - name: Run tests
         run: PYTHONPATH=src python -m unittest discover -s tests -v
       - name: Build and install Debian package
@@ -38,7 +40,7 @@ jobs:
       image: archlinux:base-devel
     steps:
       - name: Install Arch build tools
-        run: pacman -Syu --noconfirm git python python-pip
+        run: pacman -Syu --noconfirm cmake git python python-pip
       - uses: actions/checkout@v4
       - name: Build and install Arch package
         run: |
@@ -67,6 +69,14 @@ jobs:
           python -m pip install -r packaging/requirements-build.txt
           dotnet tool install --global wix --version 5.0.2
           Add-Content -Path $env:GITHUB_PATH -Value "$env:USERPROFILE\.dotnet\tools"
+      - name: Build native parser and run tests
+        shell: pwsh
+        run: |
+          python packaging/build_native.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:PYTHONPATH = "src"
+          python -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build, install, and smoke-test MSI
         shell: pwsh
         run: |
@@ -100,6 +110,10 @@ jobs:
           python-version: "3.11"
       - name: Install packaging tool
         run: python -m pip install -r packaging/requirements-build.txt
+      - name: Build and test native parser
+        run: python packaging/build_native.py
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
       - name: Build, install, and smoke-test package
         run: |
           bash packaging/macos/build_pkg.sh

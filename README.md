@@ -4,11 +4,11 @@ The Fall of Babylon is a local-first foundation for authorized static file analy
 
 ## What it does
 
-The current implementation performs bounded, read-only analysis of one caller-authorized local file or a caller-authorized local directory. It records SHA-256 acquisition provenance for files, identifies a small set of file signatures, and reports byte-profile and text-encoding validity hints without emitting source content. It does not execute samples or structurally parse file formats.
+The current implementation performs bounded, read-only analysis of one caller-authorized local file or a caller-authorized local directory. It records SHA-256 acquisition provenance for files, identifies a small set of file signatures, reports byte-profile and text-encoding validity hints, and extracts bounded structural metadata from PE, ELF, and Mach-O files without emitting source content. It does not execute samples or provide a safety verdict.
 
-Use it only with material you own or are explicitly authorized to analyze. The CLI rejects symlinks, non-regular files, parent-directory components, and inputs larger than 1 MiB. It requires a non-empty authorization statement for every request; that statement is a caller declaration, not independently verified. Analysis is offline and has no external engine or plugin loader. By default, the report is printed to stdout; the source file is never modified.
+Use it only with material you own or are explicitly authorized to analyze. The CLI rejects symlinks/reparse points, non-regular files, parent-directory components, and inputs larger than 1 MiB. It requires a non-empty authorization statement for every request; that statement is a caller declaration, not independently verified. Analysis is offline and has no external engine or plugin loader. By default, the report is printed to stdout; the source file is never modified. Windows supports single-file analysis and the UI; directory traversal remains unsupported there.
 
-Built-in engines report header-signature matches, byte-frequency/entropy/printable-byte statistics, and strict encoding validity hints. These are observations, not a verdict, and do not expose literal source contents. The signature engine recognizes PDF, PNG, JPEG, GIF, ZIP, GZIP, SQLite, WAVE, WebP, ELF, Mach-O, and PE header signatures; identification is not format validation. An extension without a matching signature is only a hint.
+Built-in engines report header-signature matches, byte-frequency/entropy/printable-byte statistics, strict encoding validity hints, and structural metadata for PE/COFF, ELF32/64, and Mach-O thin/universal headers and tables. Parsing is bounded to 1 MiB and reports truncation, malformed structures, or unsupported variants explicitly; metadata is observational and is not a verdict. The signature engine also recognizes PDF, PNG, JPEG, GIF, ZIP, GZIP, SQLite, WAVE, and WebP; an extension without a matching signature is only a hint.
 
 ## Install
 
@@ -50,9 +50,15 @@ The selected SQLite database is created or updated transactionally, must already
 
 The browser UI binds only to `127.0.0.1`, requires same-origin requests and a per-run request token, and accepts only bytes from the browser's explicit single-file selection (maximum 1 MiB). It does not accept a filesystem path from the browser, create report databases, or send data off-device. Uploads are analyzed through the same core inside a private temporary directory that is removed after the response. The downloaded JSON report is the only persistent browser export; page state is otherwise transient.
 
-Directory analysis has fixed ceilings: depth 3 below the selected root, 50 regular files, 100 recorded entries, 1 MiB per file, and 16 MiB total read. Symlinks and special files are recorded as rejected without following or opening them; over-limit, unreadable, and skipped entries receive explicit statuses. The directory report marks truncated traversal. Any selected database must be outside the analyzed directory.
+The native parser runs as a bundled helper process. It receives only the already-acquired bytes through stdin, has no path or network access, and is subject to input, response, and time limits. Directory analysis has fixed ceilings: depth 3 below the selected root, 50 regular files, 100 recorded entries, 1 MiB per file, and 16 MiB total read. Symlinks and special files are recorded as rejected without following or opening them; over-limit, unreadable, and skipped entries receive explicit statuses. The directory report marks truncated traversal. Any selected database must be outside the analyzed directory.
 
 ## Development
+
+Install CMake and a C++17 compiler, then build/test the bundled helper before source-mode analysis:
+
+```sh
+python packaging/build_native.py
+```
 
 Run the test suite with:
 

@@ -4,7 +4,7 @@
 
 The project is intended for bounded, offline analysis of local material that the caller owns or is explicitly authorized to analyze. The authorization statement is a caller declaration and is not independently verified.
 
-The implementation does not execute samples, structurally parse file formats, decompress archives, or provide a sandbox. Its built-in findings are observations, not a malware verdict. Refer to [ARCHITECTURE.md](ARCHITECTURE.md) for the current boundaries and limitations. Do not rely on this project as a substitute for a dedicated security product or controlled forensic environment.
+The implementation does not execute samples, decompress archives, disassemble code, or provide a sandbox. A bounded C++ helper parses selected PE, ELF, and Mach-O structural metadata in a separate process; malformed input can still expose parser defects, so keep the application updated and treat the output as descriptive only. Its findings are not a malware verdict. Refer to [ARCHITECTURE.md](ARCHITECTURE.md) for the current boundaries and limitations. Do not rely on this project as a substitute for a dedicated security product or controlled forensic environment.
 
 ## Reporting a vulnerability
 

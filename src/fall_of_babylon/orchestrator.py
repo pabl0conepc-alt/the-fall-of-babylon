@@ -11,6 +11,7 @@ from .local_analysis import (
     LocalFileContent,
     read_local_file,
 )
+from .native_parser import NativeFormatEngine
 from .ports import AnalysisEngine, Analyzer
 
 
@@ -73,6 +74,11 @@ def create_default_analyzer() -> Analyzer:
     """Build the offline analyzer with the supported built-in engines."""
     return AnalysisOrchestrator(
         EngineRegistry(
-            (SignatureEngine(), StaticProfileEngine(), TextEncodingEngine())
+            (
+                SignatureEngine(),
+                StaticProfileEngine(),
+                TextEncodingEngine(),
+                NativeFormatEngine(),
+            )
         )
     )

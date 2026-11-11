@@ -76,6 +76,7 @@ class CliTests(unittest.TestCase):
                 "signature-identification",
                 "byte-profile",
                 "text-encoding-profile",
+                "native-structural-format",
             ],
         )
         self.assertIn(
@@ -153,6 +154,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertIn("error:", result.stderr)
 
+    @unittest.skipIf(os.name == "nt", "directory traversal is not supported on Windows")
     def test_directory_command_is_read_only_without_database_and_persists_opt_in(self) -> None:
         directory = self.root / "authorized"
         directory.mkdir()
@@ -209,6 +211,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(exported.returncode, 0, exported.stderr)
         self.assertEqual(json.loads(exported.stdout), stored_report)
 
+    @unittest.skipIf(os.name == "nt", "directory traversal is not supported on Windows")
     def test_directory_report_database_cannot_be_created_inside_scanned_tree(self) -> None:
         directory = self.root / "authorized"
         directory.mkdir()
@@ -255,7 +258,10 @@ class CliTests(unittest.TestCase):
         target = self.root / "sample.txt"
         target.write_text("fixture", encoding="utf-8")
         link = self.root / "link.txt"
-        link.symlink_to(target)
+        try:
+            link.symlink_to(target)
+        except (OSError, NotImplementedError):
+            self.skipTest("symbolic-link creation is unavailable")
 
         result = self.run_cli(
             "analyze",

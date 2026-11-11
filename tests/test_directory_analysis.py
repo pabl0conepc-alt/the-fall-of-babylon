@@ -18,6 +18,7 @@ from fall_of_babylon.directory_analysis import (
 )
 
 
+@unittest.skipIf(os.name == "nt", "the directory walker requires POSIX descriptor APIs")
 class DirectoryAnalysisTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -120,6 +121,22 @@ class DirectoryAnalysisTests(unittest.TestCase):
         self.assertEqual(len(skipped), 1)
         self.assertEqual(report.max_total_bytes, 20)
         self.assertTrue(report.truncated)
+
+
+class WindowsDirectoryAnalysisTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "nt", "Windows-specific directory boundary")
+    def test_refuses_directory_walk_with_explicit_platform_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(
+                DirectoryAnalysisError,
+                "secure no-follow directory traversal",
+            ):
+                analyze_local_directory(
+                    DirectoryRequest(
+                        Path(temporary),
+                        "authorized test fixture",
+                    )
+                )
 
 
 if __name__ == "__main__":

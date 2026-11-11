@@ -35,6 +35,17 @@ class LocalAnalysisTests(unittest.TestCase):
         self.assertEqual(result.sha256, hashlib.sha256(content).hexdigest())
         self.assertEqual(result.extension_hint, ".bin")
 
+    @unittest.skipUnless(os.name == "nt", "Windows handle-reader integration test")
+    def test_reads_a_regular_file_through_windows_handle_access(self) -> None:
+        content = b"bounded Windows file fixture"
+        target = self.root / "windows-input.bin"
+        target.write_bytes(content)
+
+        result = self.analyze(target)
+
+        self.assertEqual(result.size_bytes, len(content))
+        self.assertEqual(result.sha256, hashlib.sha256(content).hexdigest())
+
     def test_extension_is_reported_as_hint_only(self) -> None:
         target = self.root / "unknown.pdf"
         target.write_bytes(b"not a PDF")
@@ -91,9 +102,12 @@ class LocalAnalysisTests(unittest.TestCase):
         target = self.root / "real.txt"
         target.write_text("fixture", encoding="utf-8")
         file_link = self.root / "file-link"
-        file_link.symlink_to(target)
         directory_link = self.root / "directory-link"
-        directory_link.symlink_to(self.root, target_is_directory=True)
+        try:
+            file_link.symlink_to(target)
+            directory_link.symlink_to(self.root, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("symbolic-link creation is unavailable")
 
         with self.assertRaises(LocalAnalysisError):
             self.analyze(file_link)

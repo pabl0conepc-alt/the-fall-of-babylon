@@ -6,7 +6,7 @@ arch=('x86_64')
 url='https://github.com/pabl0conepc-alt/the-fall-of-babylon'
 license=('unknown')
 depends=('glibc')
-makedepends=('python' 'python-pip')
+makedepends=('cmake' 'python' 'python-pip')
 source=()
 sha256sums=()
 
@@ -20,7 +20,8 @@ build() {
     -r "$repository_root/packaging/requirements-build.txt"
   "$build_environment/bin/python" "$repository_root/packaging/build_binary.py" \
     --dist-dir "$srcdir/dist" \
-    --work-dir "$srcdir/build"
+    --work-dir "$srcdir/build" \
+    --native-dir "$srcdir/build/native"
 }
 
 package() {

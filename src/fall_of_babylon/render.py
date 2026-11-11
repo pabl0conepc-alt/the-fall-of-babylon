@@ -4,8 +4,8 @@ from typing import Any
 
 
 _LIMITATION = (
-    "Observational static analysis only; no verdict, execution, extraction, "
-    "or structural file parsing is performed."
+    "Observational static analysis only; no verdict, execution, archive extraction, "
+    "or code disassembly is performed."
 )
 
 

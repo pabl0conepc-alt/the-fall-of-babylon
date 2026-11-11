@@ -86,7 +86,7 @@
         <button id="clear" class="secondary" type="button">Clear selection and results</button>
       </div>
       <p id="status" class="status" role="status" aria-live="polite">Select a file and confirm authorization to begin.</p>
-      <p class="notice">This tool reports observations, not a safety verdict. It recognizes limited signatures, byte statistics, and encoding hints; it does not structurally parse formats.</p>
+      <p class="notice">This tool reports observations, not a safety verdict. Along with signatures, byte statistics, and encoding hints, it extracts bounded structural metadata from PE, ELF, and Mach-O files. Malformed or truncated structures are reported explicitly; samples are never executed.</p>
     </section>
 
     <section id="results" class="panel" aria-labelledby="results-title" hidden>

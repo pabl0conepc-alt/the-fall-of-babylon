@@ -37,6 +37,7 @@ class PipelineTests(unittest.TestCase):
                 EngineStatus.COMPLETED,
                 EngineStatus.COMPLETED,
                 EngineStatus.COMPLETED,
+                EngineStatus.COMPLETED,
             ],
         )
         self.assertTrue(
