@@ -7,11 +7,11 @@ Os instaladores contêm um executável independente da CLI `babylon`; a interfac
 | Debian 12+ / Ubuntu 22.04+ x86_64 | `.deb` | `sudo apt install ./babylon_*.deb` | `sudo apt remove babylon` |
 | Arch Linux x86_64 | `.pkg.tar.zst` | `sudo pacman -U ./babylon-*.pkg.tar.zst` | `sudo pacman -R babylon` |
 | Windows 10/11 x64 | `.msi` | Abra o MSI e confirme a instalação | Configurações → Aplicativos → Babylon → Desinstalar |
-| macOS x86_64 / Apple Silicon | `.pkg` | Abra o pacote e siga o instalador | `sudo rm /usr/local/bin/babylon` e `sudo rm -r /usr/local/share/doc/babylon` |
+| macOS arm64 (CI; builds locais seguem a arquitetura do host) | `.pkg` | Abra o pacote e siga o instalador | `sudo rm /usr/local/bin/babylon` e `sudo rm -r /usr/local/share/doc/babylon` |
 
 No Debian/Ubuntu, a versão atual requer `libc6` 2.35 ou superior. A receita Arch compila no próprio Arch e acompanha a versão do projeto; ao atualizar `pyproject.toml`, atualize também `pkgver` em `packaging/arch/PKGBUILD`.
 
-O MSI é x64 e o workflow valida a instalação em Windows Server 2022; os runners hospedados não são Windows 10/11 desktop, portanto a compatibilidade com essas versões é definida pelo instalador, mas não testada diretamente por esse runner. O `.pkg` é compilado e testado na arquitetura do runner macOS 15.
+O MSI é x64 e o workflow valida a instalação em Windows Server 2022; os runners hospedados não são Windows 10/11 desktop, portanto a compatibilidade com essas versões é definida pelo instalador, mas não testada diretamente por esse runner. O `.pkg` do CI é arm64, compilado e testado no runner Apple Silicon macOS 15; builds locais seguem a arquitetura do Mac, incluindo Intel.
 
 Depois de instalar, use `babylon --help` e `babylon ui`; a UI informa a URL loopback para abrir no navegador. No macOS, o pacote ainda não é assinado nem notarizado: o Gatekeeper pode bloquear sua abertura. Se isso ocorrer, permita explicitamente o pacote em Privacidade e Segurança após confirmar que ele veio do artefato de CI esperado. No Windows, o MSI também não é assinado; o SmartScreen pode exibir um aviso de publicador desconhecido. Não há certificados nem credenciais de assinatura configurados.
 
