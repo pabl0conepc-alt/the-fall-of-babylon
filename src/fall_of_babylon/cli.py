@@ -12,11 +12,14 @@ from .local_analysis import LocalAnalysisError
 from .orchestrator import create_default_analyzer
 from .report_store import (
     MAX_JOB_LIMIT,
+    PersistableReport,
     ReportStoreError,
     export_report,
     list_jobs,
     save_report,
 )
+from .render import render_jobs, render_report
+from .web import serve_ui
 
 
 def _require_non_blank(value: str) -> str:
@@ -33,6 +36,15 @@ def _positive_limit(value: str) -> int:
     if not 1 <= limit <= MAX_JOB_LIMIT:
         raise argparse.ArgumentTypeError(f"must be between 1 and {MAX_JOB_LIMIT}")
     return limit
+
+
+def _add_format_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text; use json for automation)",
+    )
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -54,6 +66,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="opt in to saving the report in this private local SQLite database",
     )
+    _add_format_argument(analyze)
 
     analyze_directory = commands.add_parser(
         "analyze-directory",
@@ -75,6 +88,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="opt in to saving the directory report in this private local SQLite database",
     )
+    _add_format_argument(analyze_directory)
 
     jobs = commands.add_parser("jobs", help="list saved local analysis jobs")
     jobs.add_argument("--database", required=True, type=Path, help="existing local SQLite database")
@@ -84,35 +98,62 @@ def _build_parser() -> argparse.ArgumentParser:
         default=20,
         help=f"maximum number of recent jobs to list (1-{MAX_JOB_LIMIT}; default: 20)",
     )
+    _add_format_argument(jobs)
 
-    export = commands.add_parser("export", help="print one saved report as JSON")
+    export = commands.add_parser("export", help="print one saved report")
     export.add_argument("job_id", type=_require_non_blank, help="saved job ID")
     export.add_argument("--database", required=True, type=Path, help="existing local SQLite database")
+    _add_format_argument(export)
+
+    ui = commands.add_parser(
+        "ui",
+        help="open the offline browser interface for an explicitly selected file",
+    )
+    ui.add_argument("--port", type=int, default=8765, help="loopback port (default: 8765)")
     return parser
+
+
+def _print_report(report: PersistableReport, output_format: str) -> None:
+    data = report.to_dict()
+    if output_format == "json":
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print(render_report(data))
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     try:
+        if args.command == "ui":
+            serve_ui(args.port)
+            return 0
         if args.command == "analyze":
             request = AnalysisRequest(args.target, args.authorization_basis)
             result = create_default_analyzer().analyze(request)
             if args.database is not None:
                 save_report(args.database, result)
-            print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+            _print_report(result, args.format)
             return int(any(engine.status is EngineStatus.FAILED for engine in result.engine_results))
         if args.command == "analyze-directory":
             request = DirectoryRequest(args.target, args.authorization_basis)
             result = analyze_local_directory(request)
             if args.database is not None:
                 save_report(args.database, result)
-            print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+            _print_report(result, args.format)
             return 0
         if args.command == "jobs":
-            print(json.dumps({"jobs": list_jobs(args.database, args.limit)}, indent=2, sort_keys=True))
+            jobs = list_jobs(args.database, args.limit)
+            if args.format == "json":
+                print(json.dumps({"jobs": jobs}, indent=2, sort_keys=True))
+            else:
+                print(render_jobs(jobs))
             return 0
         if args.command == "export":
-            print(json.dumps(export_report(args.database, args.job_id), indent=2, sort_keys=True))
+            report = export_report(args.database, args.job_id)
+            if args.format == "json":
+                print(json.dumps(report, indent=2, sort_keys=True))
+            else:
+                print(render_report(report))
             return 0
     except LocalAnalysisError as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -121,6 +162,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     except ReportStoreError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except (OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     raise RuntimeError(f"unsupported command: {args.command}")

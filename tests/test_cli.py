@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import subprocess
@@ -19,15 +20,39 @@ class CliTests(unittest.TestCase):
             part for part in (source_path, existing_pythonpath) if part
         )
 
-    def run_cli(self, *args: str) -> subprocess.CompletedProcess[str]:
+    def run_cli(
+        self, *args: str, output_format: str | None = "json"
+    ) -> subprocess.CompletedProcess[str]:
+        command = [sys.executable, "-m", "fall_of_babylon", *args]
+        if output_format is not None:
+            command.extend(("--format", output_format))
         return subprocess.run(
-            [sys.executable, "-m", "fall_of_babylon", *args],
+            command,
             capture_output=True,
             text=True,
             env=self.env,
             timeout=10,
             check=False,
         )
+
+    def test_analysis_defaults_to_human_readable_report(self) -> None:
+        target = self.root / "sample.png"
+        target.write_bytes(b"\x89PNG\r\n\x1a\nfixture")
+
+        result = self.run_cli(
+            "analyze",
+            str(target),
+            "--authorization-basis",
+            "owned test fixture",
+            output_format=None,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Babylon analysis · file job", result.stdout)
+        self.assertIn(f"SHA-256: {hashlib.sha256(target.read_bytes()).hexdigest()}", result.stdout)
+        self.assertIn("[INFO] File signature identified", result.stdout)
+        self.assertIn("Observational static analysis only", result.stdout)
+        self.assertNotEqual(result.stdout[:1], "{")
 
     def test_emits_json_for_an_authorized_local_file(self) -> None:
         target = self.root / "sample.png"
@@ -85,6 +110,11 @@ class CliTests(unittest.TestCase):
         self.assertEqual(len(jobs), 1)
         self.assertEqual(jobs[0]["job_id"], report["job"]["id"])
 
+        readable = self.run_cli("jobs", "--database", str(database), output_format="text")
+        self.assertEqual(readable.returncode, 0, readable.stderr)
+        self.assertIn(report["job"]["id"], readable.stdout)
+        self.assertIn("Saved local analysis jobs", readable.stdout)
+
         exported = self.run_cli(
             "export",
             report["job"]["id"],
@@ -93,6 +123,16 @@ class CliTests(unittest.TestCase):
         )
         self.assertEqual(exported.returncode, 0, exported.stderr)
         self.assertEqual(json.loads(exported.stdout), report)
+
+        readable_export = self.run_cli(
+            "export",
+            report["job"]["id"],
+            "--database",
+            str(database),
+            output_format="text",
+        )
+        self.assertEqual(readable_export.returncode, 0, readable_export.stderr)
+        self.assertIn(f"Babylon analysis · file job {report['job']['id']}", readable_export.stdout)
 
     def test_rejects_using_the_source_as_the_database(self) -> None:
         target = self.root / "sample.bin"
@@ -133,6 +173,18 @@ class CliTests(unittest.TestCase):
         self.assertEqual(report["summary"]["files_analyzed"], 1)
         self.assertEqual(source.read_bytes(), original)
         self.assertEqual([path.name for path in directory.iterdir()], ["sample.txt"])
+
+        readable = self.run_cli(
+            "analyze-directory",
+            str(directory),
+            "--authorization-basis",
+            "authorized test fixture",
+            output_format="text",
+        )
+        self.assertEqual(readable.returncode, 0, readable.stderr)
+        self.assertIn("Files analyzed: 1", readable.stdout)
+        self.assertIn("sample.txt", readable.stdout)
+        self.assertIn("Observational static analysis only", readable.stdout)
 
         database = self.root / "reports.sqlite3"
         stored = self.run_cli(
