@@ -9,6 +9,7 @@ from fall_of_babylon.local_analysis import (
     MAX_FILE_BYTES,
     LocalAnalysisError,
     analyze_local_file,
+    identify_format_with_range,
 )
 
 
@@ -55,6 +56,8 @@ class LocalAnalysisTests(unittest.TestCase):
             "SQLite": b"SQLite format 3\x00",
             "WAVE": b"RIFF\x00\x00\x00\x00WAVE",
             "WebP": b"RIFF\x00\x00\x00\x00WEBP",
+            "ELF": b"\x7fELF\x02\x01\x01",
+            "Mach-O": b"\xcf\xfa\xed\xfe",
         }
 
         for expected_format, signature in signatures.items():
@@ -63,6 +66,17 @@ class LocalAnalysisTests(unittest.TestCase):
                 target.write_bytes(signature)
                 self.assertEqual(self.analyze(target).format_name, expected_format)
 
+    def test_identifies_pe_using_bounded_dos_header_offset(self) -> None:
+        content = bytearray(72)
+        content[:2] = b"MZ"
+        content[0x3C:0x40] = (64).to_bytes(4, "little")
+        content[64:68] = b"PE\x00\x00"
+        target = self.root / "sample.bin"
+        target.write_bytes(content)
+
+        self.assertEqual(self.analyze(target).format_name, "PE")
+        self.assertEqual(identify_format_with_range(bytes(content)), ("PE", 68))
+
     def test_rejects_missing_paths_directories_and_parent_components(self) -> None:
         with self.assertRaises(LocalAnalysisError):
             self.analyze(self.root / "missing")
@@ -70,6 +84,8 @@ class LocalAnalysisTests(unittest.TestCase):
             self.analyze(self.root)
         with self.assertRaises(LocalAnalysisError):
             self.analyze(Path("folder") / ".." / "sample.txt")
+        with self.assertRaises(LocalAnalysisError):
+            self.analyze(Path("\x00"))
 
     def test_rejects_symlinked_file_and_directory(self) -> None:
         target = self.root / "real.txt"
