@@ -8,3 +8,4 @@ This file records notable project changes. There are no tagged releases or relea
 - Added SHA-256 acquisition provenance, signature-family identification, byte profiling, and strict text-encoding validity hints.
 - Added an offline loopback browser interface and optional local SQLite report persistence.
 - Added native installer packaging for Debian/Ubuntu, Arch Linux, Windows, and macOS; CI provides build artifacts rather than publishing GitHub Releases.
+- Fixed non-editable pip installations, which now build and bundle the native parser helper.

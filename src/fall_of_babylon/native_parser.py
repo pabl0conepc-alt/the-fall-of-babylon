@@ -125,7 +125,11 @@ def _helper_path() -> Path:
     bundle_root = getattr(sys, "_MEIPASS", None)
     if isinstance(bundle_root, str):
         return Path(bundle_root) / "native" / executable_name
-    repository_root = Path(__file__).resolve().parents[2]
+    package_root = Path(__file__).resolve().parent
+    packaged_helper = package_root / "native" / executable_name
+    if packaged_helper.is_file():
+        return packaged_helper
+    repository_root = package_root.parents[1]
     return repository_root / "build" / "native" / executable_name
 
 
