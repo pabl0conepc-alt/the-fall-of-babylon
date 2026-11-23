@@ -12,7 +12,8 @@ class CliTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)
-        self.root = Path(self.temp_dir.name)
+        # macOS places temporary files below the /var symlink.
+        self.root = Path(self.temp_dir.name).resolve()
         self.env = os.environ.copy()
         source_path = str(Path(__file__).resolve().parents[1] / "src")
         existing_pythonpath = self.env.get("PYTHONPATH")

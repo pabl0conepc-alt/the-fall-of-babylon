@@ -16,7 +16,8 @@ class PipelineTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)
-        self.root = Path(self.temp_dir.name)
+        # macOS places temporary files below the /var symlink.
+        self.root = Path(self.temp_dir.name).resolve()
 
     def test_default_pipeline_hashes_source_and_provenance_covers_same_artifact(self) -> None:
         content = b"\x89PNG\r\n\x1a\nhello\x00"

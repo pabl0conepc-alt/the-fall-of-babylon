@@ -130,7 +130,9 @@ class _RequestHandler(BaseHTTPRequestHandler):
         suffix = Path(filename).suffix
         if not _SAFE_SUFFIX.fullmatch(suffix):
             suffix = ""
-        with tempfile.TemporaryDirectory(prefix="babylon-ui-") as private_dir:
+        # The safe reader rejects symlinked components, such as macOS's /var.
+        temporary_root = os.path.realpath(tempfile.gettempdir())
+        with tempfile.TemporaryDirectory(prefix="babylon-ui-", dir=temporary_root) as private_dir:
             target = Path(private_dir) / f"selected{suffix}"
             descriptor = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             with os.fdopen(descriptor, "wb") as temporary_file:

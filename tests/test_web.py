@@ -1,6 +1,8 @@
 import hashlib
 import http.client
 import json
+import os
+import tempfile
 import threading
 import unittest
 from pathlib import Path
@@ -39,6 +41,23 @@ class WebUiTests(unittest.TestCase):
             method="POST",
         )
         return urlopen(request, timeout=5)
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "symlinks are unavailable")
+    def test_upload_succeeds_when_temporary_root_is_a_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            real_root = Path(directory) / "real"
+            real_root.mkdir()
+            linked_root = Path(directory) / "linked"
+            try:
+                linked_root.symlink_to(real_root, target_is_directory=True)
+            except OSError:
+                self.skipTest("symlink creation is unavailable")
+            with patch("tempfile.tempdir", str(linked_root)):
+                with self._post(b"\x89PNG\r\n\x1a\nlocal fixture") as response:
+                    payload = json.loads(response.read())
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(payload["report"]["evidence"]["path"], "sample.png")
 
     def test_serves_local_html_without_remote_assets(self) -> None:
         with urlopen(self.url, timeout=5) as response:
