@@ -12,9 +12,16 @@ Built-in engines report header-signature matches, byte-frequency/entropy/printab
 
 ## Install
 
-Python 3.11 or newer is required. Runtime code uses only the Python standard library. To install the package in editable mode and provide the `babylon` command:
+Python 3.11 or newer is required. Runtime code uses only the Python standard library. Installing from source also requires CMake 3.20+ and a C++17 compiler, because the native parser helper is built and bundled during installation:
 
 ```sh
+python -m pip install .
+```
+
+An editable install does not bundle the helper, so build it in the checkout as well:
+
+```sh
+python packaging/build_native.py
 python -m pip install -e .
 ```
 

@@ -1,5 +1,6 @@
 import hashlib
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -197,6 +198,17 @@ class NativeFormatEngineTests(unittest.TestCase):
 
         self.assertEqual(result.status, EngineStatus.FAILED)
         self.assertIn("1 MiB", result.error)
+
+
+class HelperPathTests(unittest.TestCase):
+    def test_finds_helper_bundled_in_an_installed_package(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory).resolve() / "site-packages" / "fall_of_babylon"
+            helper = package / "native" / _helper_path().name
+            helper.parent.mkdir(parents=True)
+            helper.touch()
+            with patch("fall_of_babylon.native_parser.__file__", str(package / "native_parser.py")):
+                self.assertEqual(_helper_path(), helper)
 
 
 if __name__ == "__main__":
