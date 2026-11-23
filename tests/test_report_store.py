@@ -3,6 +3,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 from fall_of_babylon import AnalysisRequest
@@ -20,7 +21,8 @@ class ReportStoreTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)
-        self.root = Path(self.temp_dir.name)
+        # macOS places temporary files below the /var symlink.
+        self.root = Path(self.temp_dir.name).resolve()
         self.source = self.root / "sample.bin"
         self.source.write_bytes(b"local test evidence")
         self.report = create_default_analyzer().analyze(
@@ -44,7 +46,7 @@ class ReportStoreTests(unittest.TestCase):
             ],
         )
         self.assertEqual(export_report(self.database, self.report.job_id), self.report.to_dict())
-        with sqlite3.connect(self.database) as connection:
+        with closing(sqlite3.connect(self.database)) as connection, connection:
             self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 2)
             self.assertEqual(connection.execute("PRAGMA application_id").fetchone()[0], 0x42414259)
 
@@ -100,7 +102,7 @@ class ReportStoreTests(unittest.TestCase):
         self.assertFalse(missing.exists())
 
     def test_refuses_non_empty_unversioned_database(self) -> None:
-        with sqlite3.connect(self.database) as connection:
+        with closing(sqlite3.connect(self.database)) as connection, connection:
             connection.execute("CREATE TABLE unrelated (value TEXT)")
         if os.name == "posix":
             self.database.chmod(0o600)
@@ -108,7 +110,7 @@ class ReportStoreTests(unittest.TestCase):
         with self.assertRaises(ReportStoreError):
             save_report(self.database, self.report)
 
-        with sqlite3.connect(self.database) as connection:
+        with closing(sqlite3.connect(self.database)) as connection, connection:
             self.assertEqual(
                 connection.execute(
                     "SELECT name FROM sqlite_master WHERE type='table' AND name='unrelated'"
@@ -119,7 +121,7 @@ class ReportStoreTests(unittest.TestCase):
     def test_migrates_existing_v1_database_transactionally(self) -> None:
         old_report = self.report.to_dict()
         old_report["job"]["id"] = "previous-job"
-        with sqlite3.connect(self.database) as connection:
+        with closing(sqlite3.connect(self.database)) as connection, connection:
             connection.execute(
                 """
                 CREATE TABLE babylon_jobs (
@@ -156,7 +158,7 @@ class ReportStoreTests(unittest.TestCase):
 
         save_report(self.database, self.report)
 
-        with sqlite3.connect(self.database) as connection:
+        with closing(sqlite3.connect(self.database)) as connection, connection:
             self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 2)
         jobs = list_jobs(self.database)
         self.assertEqual({job["job_type"] for job in jobs}, {"file"})

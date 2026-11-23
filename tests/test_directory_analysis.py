@@ -23,7 +23,8 @@ class DirectoryAnalysisTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)
-        self.root = Path(self.temp_dir.name) / "authorized"
+        # macOS places temporary files below the /var symlink.
+        self.root = Path(self.temp_dir.name).resolve() / "authorized"
         self.root.mkdir()
 
     def analyze(self, root: Path | None = None):

@@ -17,7 +17,8 @@ class LocalAnalysisTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)
-        self.root = Path(self.temp_dir.name)
+        # macOS places temporary files below the /var symlink.
+        self.root = Path(self.temp_dir.name).resolve()
 
     def analyze(self, path: Path):
         return analyze_local_file(AnalysisRequest(path, "test-owned fixture"))
